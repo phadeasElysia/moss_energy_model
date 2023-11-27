@@ -3,7 +3,6 @@ import pandas as pd
 import random
 import scipy.stats as stats
 
-
 # Initialize PyNetLogo
 netlogo = pynetlogo.NetLogoLink(netlogo_home='E:/netlogo/')
 
@@ -16,30 +15,44 @@ netlogo.command('setup')
 # Retrieve agents data
 
 
-
-
-
-
-
+# def break_down(age):
+#     scale_parameter = 2
+#     shape_parameter = 2
+#
+#     random_float = random.uniform(0, 1)
+#
+#     # Calculate the probability density function (PDF) of the Weibull distribution
+#     pdf = stats.weibull_min.pdf(age, shape_parameter, scale=scale_parameter)
+#
+#     # Check if the random number is less than the PDF
+#     if random_float < pdf and age >= 14:
+#         return True
+#     else:
+#         return False
 
 def break_down(age):
-    scale_parameter = 2
-    shape_parameter = 2
+    if age < 15:
+        return False  # Assuming no breakdown probability before 15 years
+    elif age > 20:
+        return True  # Assuming certain breakdown after 20 years
 
-    random_float = random.uniform(0, 1)
+    # Define probabilities at 15 and 20 years
+    prob_at_15 = 0.1  # 10% probability at 15 years
+    prob_at_20 = 1.0  # 100% probability at 20 years
 
-    # Calculate the probability density function (PDF) of the Weibull distribution
-    pdf = stats.weibull_min.pdf(age, shape_parameter, scale=scale_parameter)
+    # Calculate the rate of increase per year
+    rate_of_increase = (prob_at_20 - prob_at_15) / (20 - 15)
 
-    # Check if the random number is less than the PDF
-    if random_float < pdf:
-        return True
-    else:
-        return False
+    # Calculate the probability for the given age
+    breakdown_probability = prob_at_15 + (age - 15) * rate_of_increase
+
+    # Generate a random number and compare with the breakdown probability
+    return random.random() < breakdown_probability
+
 
 # Press the green button in the gutter to run the script.
 def get_available_systems(heating_system_type, heat_pumps_available, heating_budget, gas_prices, oil_prices, ASHP_price,
-                          electic_boiler_price, GSHP_price, innovation = False):
+                          electic_boiler_price, GSHP_price, innovation=False):
     available_list = []
     budget = heating_budget * 10
     if budget >= oil_prices:
@@ -52,17 +65,18 @@ def get_available_systems(heating_system_type, heat_pumps_available, heating_bud
         available_list.append('ASHP')
     if budget >= GSHP_price and heat_pumps_available and innovation:
         available_list.append('GSHP')
-    if heating_system_type in available_list:
-        available_list.remove(heating_system_type)
+    # if heating_system_type in available_list:
+    #     available_list.remove(heating_system_type)
     return available_list
 
 
 def renovation(i):
-    if i % 12 == 0:
-        x = random.uniform(0,10)
-        if x <= 1:
-            return True
-    return False
+    # if i % 12 == 0:
+    #     x = random.uniform(0, 10)
+    #     if x <= 1:
+    #         return True
+    # return False
+    return random.random() < 1/120
 
 
 def insulation():
@@ -87,7 +101,7 @@ gas_start = heating_system_type_start.count('gas')
 electric_start = heating_system_type_start.count('electric')
 if __name__ == '__main__':
     results = []
-    for i in range(1,100):
+    for i in range(1, 100):
         gas_prices = netlogo.report('gas-boiler-price')
         oil_prices = netlogo.report('oil-boiler-price')
         electic_boiler_price = netlogo.report("electric-boiler-price")
@@ -109,14 +123,15 @@ if __name__ == '__main__':
         }
         df = pd.DataFrame(data)
         for index, row in df.iterrows():
-            df.at[index, 'heating-system-age'] += 1/12
+            df.at[index, 'heating-system-age'] += 1 / 12
             heating_system_type = df.loc[index, 'heating-system-type']
             heating_budget = df.loc[index, 'heating-budget']
             heating_system_age = df.loc[index, 'heating-system-age']
             heat_pumps_available = df.loc[index, 'heat-pumpsuitability']
 
             if break_down(heating_system_age):
-                available_systems = get_available_systems(heating_system_type,heat_pumps_available,heating_budget,gas_prices,oil_prices,ASHP_price,electic_boiler_price,
+                available_systems = get_available_systems(heating_system_type, heat_pumps_available, heating_budget,
+                                                          gas_prices, oil_prices, ASHP_price, electic_boiler_price,
                                                           GSHP_price)
                 if available_systems:
                     df.at[index, 'heating-system-type'] = random.choice(available_systems)
@@ -127,14 +142,16 @@ if __name__ == '__main__':
                 if updata_heating_system():
                     available_systems = get_available_systems(heating_system_type, heat_pumps_available, heating_budget,
                                                               gas_prices, oil_prices, ASHP_price, electic_boiler_price,
-                                                              GSHP_price,innovation=True)
+                                                              GSHP_price, innovation=True)
                     if available_systems:
-                        df.at[index, 'heating-system-type'] =random.choice(available_systems)
+                        df.at[index, 'heating-system-type'] = random.choice(available_systems)
                         df.at[index, 'heating-system-age'] = 0
             if df.loc[index, 'heating-system-type'] in ['ASHP', 'GSHP']:
                 df.at[index, 'color'] = 128
-                    
-        netlogo.write_NetLogo_attriblist(df[["who","heating-system-type", "heating-system-age", "heating-budget", "heat-pumpsuitability", "color"]], "household")
+
+        netlogo.write_NetLogo_attriblist(
+            df[["who", "heating-system-type", "heating-system-age", "heating-budget", "heat-pumpsuitability", "color"]],
+            "household")
         heating_system_type_in_process = list(netlogo.report("map [s -> [heating-system-type] of s] sort households"))
         ashp_end = heating_system_type_in_process.count("ASHP")
         gshp_end = heating_system_type_in_process.count("GSHP")
@@ -142,9 +159,12 @@ if __name__ == '__main__':
         gas_end = heating_system_type_in_process.count('gas')
         electric_end = heating_system_type_in_process.count('electric')
         hp_end = ashp_end + gshp_end
-        results.append([oil_end,gas_end,electric_end,hp_end])
+        results.append([oil_end, gas_end, electric_end, hp_end])
+        print(
+            'iteratuions' + str(i) + '\noil' + str(oil_end) + '\nelectric' + str(electric_end) + '\ngas' + str(gas_end)
+            + '\nheat-pums' + str(hp_end))
+    columns = ['oil', 'gas', 'electric', 'hp']
 
-    columns = ['oil','gas','electric','hp']
     results_df = pd.DataFrame(results, columns=columns)
 
 heating_system_type_end = list(netlogo.report("map [s -> [heating-system-type] of s] sort households"))
