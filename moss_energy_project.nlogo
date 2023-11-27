@@ -52,7 +52,7 @@ to setup
   set ASHP 10000
   set GSHP 15000
 
-  create-households 100 [
+  create-households 10000 [
     setxy random-xcor random-ycor
     set shape "house"
     set heating-system-type one-of ["gas" "oil" "electric"]
@@ -65,7 +65,7 @@ to setup
     set heating-system-broken false
     set update-insulation 0
     set update-heating-system 0
-    set heating-system-age 0
+    ;set heating-system-age 0
     ifelse random-float 1 < 0.8 [
       set heat-pumpsuitability false
     ] [

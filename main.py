@@ -86,6 +86,7 @@ oil_start = heating_system_type_start.count('oil')
 gas_start = heating_system_type_start.count('gas')
 electric_start = heating_system_type_start.count('electric')
 if __name__ == '__main__':
+    results = []
     for i in range(1,100):
         gas_prices = netlogo.report('gas-boiler-price')
         oil_prices = netlogo.report('oil-boiler-price')
@@ -134,6 +135,17 @@ if __name__ == '__main__':
                 df.at[index, 'color'] = 128
                     
         netlogo.write_NetLogo_attriblist(df[["who","heating-system-type", "heating-system-age", "heating-budget", "heat-pumpsuitability", "color"]], "household")
+        heating_system_type_in_process = list(netlogo.report("map [s -> [heating-system-type] of s] sort households"))
+        ashp_end = heating_system_type_in_process.count("ASHP")
+        gshp_end = heating_system_type_in_process.count("GSHP")
+        oil_end = heating_system_type_in_process.count('oil')
+        gas_end = heating_system_type_in_process.count('gas')
+        electric_end = heating_system_type_in_process.count('electric')
+        hp_end = ashp_end + gshp_end
+        results.append([oil_end,gas_end,electric_end,hp_end])
+
+    columns = ['oil','gas','electric','hp']
+    results_df = pd.DataFrame(results, columns=columns)
 
 heating_system_type_end = list(netlogo.report("map [s -> [heating-system-type] of s] sort households"))
 ashp_end = heating_system_type_end.count("ASHP")
