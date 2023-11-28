@@ -58,7 +58,7 @@ to setup
     set heating-system-type one-of ["gas" "oil" "electric"]
     set heating-system-age random 15
     set aware-of-heat-pumps one-of [true false]
-    set heating-budget 10000
+    set heating-budget 500 + random 1500
     set renovation-budget 5000
     set property-value 250000
     set wants-renovation (random-float 1 < 0.1)
